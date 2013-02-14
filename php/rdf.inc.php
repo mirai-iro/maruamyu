@@ -2,6 +2,8 @@
 
 /*
 	rdf.inc.php - RSS1.0ファイル生成
+		written by にゃー (mirai_iro)
+		managed by まるあみゅ.ねっと (http://maruamyu.net/)
 */
 
 abstract class Maruamyu_Core_RdfDtoAbstract
