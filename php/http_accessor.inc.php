@@ -125,11 +125,11 @@ class Maruamyu_Core_HttpAccessor
 		if(strlen($mimeType) < 1){$mimeType = 'application/octet-stream';}
 		if(strlen($body) < 1){return FALSE;}
 		
-		$multipartData[] = array(
+		$this->multipartData[] = array(
 			'name' => $name,
 			'file_name' => $fileName,
 			'mime_type' => $mimeType,
-			'body' => $name,
+			'body' => $body,
 		);
 		
 		return TRUE;
