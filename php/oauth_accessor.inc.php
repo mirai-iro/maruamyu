@@ -10,8 +10,6 @@
 		query_string_dto.inc.php - QUERY_STRING操作
 */
 
-#--------------------------------------------------------------------------------
-
 # 通信結果が格納されるDTO
 class Maruamyu_Core_OAuthResponseDto
 {
@@ -154,8 +152,6 @@ class Maruamyu_Core_OAuthAccessor
 		return $responseDto;
 	}
 }
-
-#--------------------------------------------------------------------------------
 
 return TRUE;
 
