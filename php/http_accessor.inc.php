@@ -85,7 +85,7 @@ class Maruamyu_Core_HttpAccessor
 	{
 		if(strlen($key) < 1){return FALSE;}
 		
-		$requestHeader[$key] = $value;
+		$this->requestHeader[$key] = $value;
 		return TRUE;
 	}
 	
@@ -102,6 +102,19 @@ class Maruamyu_Core_HttpAccessor
 		if(strlen($postData) < 1){return FALSE;}
 		
 		$this->postData = $postData;
+		return TRUE;
+	}
+	
+	public function setQueryString($queryString)
+	{
+		if(strlen($queryString) < 1){return FALSE;}
+		
+		if(strpos($this->requestPath,'?') !== FALSE){
+			$this->requestPath .= '&'.$queryString;
+		} else {
+			$this->requestPath .= '?'.$queryString;
+		}
+		
 		return TRUE;
 	}
 	

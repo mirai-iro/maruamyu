@@ -152,6 +152,14 @@ class Maruamyu_Core_HttpAccessorTest extends PHPUnit_Framework_TestCase
 		$httpAccessor->connect();
 		$this->assertNotNull($httpAccessor->getResponseBody());
 	}
+	
+	# パスにクエリストリングを追加できる
+	public function testSetQueryString()
+	{
+		$httpAccessor = new Maruamyu_Core_HttpAccessor();
+		$httpAccessor->setRequestUrl('http://'.self::TEST_HOST.'/');
+		$this->assertTrue($httpAccessor->setQueryString('kotori=piyochan'));
+	}
 }
 
 return TRUE;
