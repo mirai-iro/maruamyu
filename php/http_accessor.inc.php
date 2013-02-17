@@ -191,6 +191,11 @@ class Maruamyu_Core_HttpAccessor
 			$this->requestHeader['Content-Length'] = strlen($this->postData);
 		}
 		
+		$acceptEncodingList = self::getAcceptEncodingList();
+		if(count($acceptEncodingList) > 0){
+			$this->requestHeader['Accept-Encoding'] = join(', ', $acceptEncodingList);
+		}
+		
 		#----------------------------------------
 		
 		$requestBuffer  = $this->requestMethod.' '.$this->requestPath.' HTTP/1.1'.self::CRLF;
@@ -206,14 +211,14 @@ class Maruamyu_Core_HttpAccessor
 		
 		@fwrite($sock, $requestBuffer);
 		
+		#----------------------------------------
+		
 		$line = rtrim( @fgets($sock) );
 		if(!preg_match('/^HTTP\/1\.\d (\d+)/', $line, $match)){return FALSE;}
 		
 		$this->responseStatus = intval($match[1]);
 		$this->responseHeader = array();
 		$this->responseBody = '';
-		
-		$responseBuffer = '';
 		
 		while(strlen($line) > 0){
 			$line = rtrim( @fgets($sock) );
@@ -222,17 +227,50 @@ class Maruamyu_Core_HttpAccessor
 			}
 		}
 		
+		$responseBuffer = '';
+		
 		while(!@feof($sock)){
 			$responseBuffer .= @fread($sock, self::READ_CHUNK_SIZE);
 		}
 		
 		@fclose($sock);
 		
-		if($this->responseHeader['Transfer-Encoding'] == 'chunked'){
-			$responseBuffer = self::unchunk($responseBuffer);
+		#----------------------------------------
+		
+		$transferEncoding = strtolower($this->responseHeader['Transfer-Encoding']);
+		$contentEncoding = strtolower($this->responseHeader['Content-Encoding']);
+		
+		if($transferEncoding == 'chunked'){
+			$unchunk = '';
+			
+			$cursor = 0;
+			$length = strlen($responseBuffer);
+			
+			while($cursor < $length){
+				$chunkSizeEndPos = strpos($responseBuffer, self::CRLF, $cursor);
+				if($chunkSizeEndPos === FALSE){break;}
+				
+				$chunkSize = hexdec( substr($responseBuffer, $cursor, ($chunkSizeEndPos - $cursor)) );
+				
+				$cursor = $chunkSizeEndPos + 2;	# strlen("\r\n") = 2
+				
+				$chunk = substr($responseBuffer, $cursor, $chunkSize);
+				if(strlen($chunk) > 0){
+					$unchunk .= self::uncompress($contentEncoding, $chunk);
+				}
+				
+				$cursor += $chunkSize + 2;	# strlen("\r\n") = 2
+			}
+			
+			$responseBuffer = $unchunk;
+			
+		} else {
+			$responseBuffer = self::uncompress($contentEncoding, $responseBuffer);
 		}
 		
 		$this->responseBody = $responseBuffer;
+		
+		#----------------------------------------
 		
 		# HTTPステータスが 200番台, 300番台だったらTRUE、それ以外はFALSE
 		return (200 <= $this->responseStatus && $this->responseStatus < 400) ? TRUE : FALSE;
@@ -248,35 +286,31 @@ class Maruamyu_Core_HttpAccessor
 		return $this->responseHeader[$key];
 	}
 	
+	public function getResponseHeaderAll()
+	{
+		return $this->responseHeader;
+	}
+	
 	public function getResponseBody()
 	{
 		return $this->responseBody;
 	}
 	
-	private static function unchunk($chunked)
+	private static function getAcceptEncodingList()
 	{
-		$unchunk = '';
-		
-		$pos = 0;
-		$length = strlen($chunked);
-		
-		while($pos < $length){
-			$pos0 = strpos($chunked, self::CRLF, $pos);
-			if($pos0 === FALSE){break;}
-			
-			# chunk size
-			$size0 = substr($chunked, $pos, ($pos0 - $pos));
-			$size = hexdec($size0);
-			
-			# read chunk
-			$pos = $pos0 + 2;	# strlen("\r\n") = 2
-			$unchunk .= substr($chunked, $pos, $size);
-			
-			# next pos
-			$pos += $size + 2;	# strlen("\r\n") = 2
+		$acceptEncodingList = array();
+		if(function_exists('gzinflate')){$acceptEncodingList[] = 'gzip';}
+		if(function_exists('gzuncompress')){$acceptEncodingList[] = 'deflate';}
+		return $acceptEncodingList;
+	}
+	
+	private static function uncompress($encoding, $compressed)
+	{
+		switch($encoding){
+			case 'deflate': return gzuncompress($compressed);
+			case 'gzip': return gzinflate(substr($compressed,10));	# zlibヘッダを取ればgzinflateでデコードできる
+			default: return $compressed;
 		}
-		
-		return $unchunk;
 	}
 }
 
