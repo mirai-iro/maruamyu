@@ -162,4 +162,6 @@ class Maruamyu_Core_QueryStringDto
 	}
 }
 
+return TRUE;
+
 ?>

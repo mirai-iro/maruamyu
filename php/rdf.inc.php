@@ -255,4 +255,6 @@ class Maruamyu_Core_RdfItemDto extends Maruamyu_Core_RdfDtoAbstract
 	}
 }
 
+return TRUE;
+
 ?>
