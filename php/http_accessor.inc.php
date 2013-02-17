@@ -1,7 +1,7 @@
 <?php
 
 /*
-	http_accessor.php - HTTPアクセサ
+	http_accessor.inc.php - HTTPアクセサ
 		written by にゃー (mirai_iro)
 		managed by まるあみゅ.ねっと (http://maruamyu.net/)
 */
