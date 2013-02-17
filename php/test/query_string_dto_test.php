@@ -147,6 +147,4 @@ class Maruamyu_Core_QueryStringDtoTest extends PHPUnit_Framework_TestCase
 	}
 }
 
-return TRUE;
-
 ?>

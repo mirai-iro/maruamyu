@@ -162,6 +162,4 @@ class Maruamyu_Core_HttpAccessorTest extends PHPUnit_Framework_TestCase
 	}
 }
 
-return TRUE;
-
 ?>
