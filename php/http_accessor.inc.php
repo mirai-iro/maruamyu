@@ -267,21 +267,15 @@ class Maruamyu_Core_HttpAccessor
 				
 				$cursor = $chunkSizeEndPos + 2;	# strlen("\r\n") = 2
 				
-				$chunk = substr($responseBuffer, $cursor, $chunkSize);
-				if(strlen($chunk) > 0){
-					$unchunk .= self::uncompress($contentEncoding, $chunk);
-				}
+				$unchunk .= substr($responseBuffer, $cursor, $chunkSize);
 				
 				$cursor += $chunkSize + 2;	# strlen("\r\n") = 2
 			}
 			
 			$responseBuffer = $unchunk;
-			
-		} else {
-			$responseBuffer = self::uncompress($contentEncoding, $responseBuffer);
 		}
 		
-		$this->responseBody = $responseBuffer;
+		$this->responseBody = self::uncompress($contentEncoding, $responseBuffer);
 		
 		#----------------------------------------
 		
