@@ -50,7 +50,7 @@ class Maruamyu_Core_QueryStringDtoTest extends PHPUnit_Framework_TestCase
 		$queryStringDto = new Maruamyu_Core_QueryStringDto();
 		$queryStringDto->insert('miki','961pro');
 		$queryStringDto->delete('miki');
-		$this->assertSame('',$queryStringDto->getStringValue('961pro'));
+		$this->assertSame('',$queryStringDto->getStringValue('miki'));
 	}
 	
 	# クエリストリングで入力できる
