@@ -37,7 +37,7 @@ class Maruamyu_Core_OAuthAccessor
 	
 	public function __construct($consumerKey, $consumerSecret)
 	{
-		$this->initialize($consumerKey, $consumerSecret);
+		self::initialize($consumerKey, $consumerSecret);
 	}
 	
 	public function initialize($consumerKey, $consumerSecret)
@@ -126,7 +126,7 @@ class Maruamyu_Core_OAuthAccessor
 			$signatureQueryStringDto = new Maruamyu_Core_QueryStringDto();
 		}
 		
-		$authorizationHeader = $this->makeAuthorizationHeader($method, $url, $signatureQueryStringDto);
+		$authorizationHeader = self::makeAuthorizationHeader($method, $url, $signatureQueryStringDto);
 		
 		$httpAccessor = new Maruamyu_Core_HttpAccessor($url);
 		$httpAccessor->setRequestMethod($method);
