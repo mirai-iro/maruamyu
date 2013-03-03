@@ -127,7 +127,9 @@ class Maruamyu_Core_QueryStringDto
 			}
 		}
 		
-		$queryString = substr($queryString,1);	# strlen('&') = 1
+		if(strlen($queryString) > 0){
+			$queryString = substr($queryString,1);	# strlen('&') = 1
+		}
 		
 		return $queryString;
 	}
@@ -159,6 +161,11 @@ class Maruamyu_Core_QueryStringDto
 		}
 		
 		return $queryString;
+	}
+	
+	public function __toString()
+	{
+		return $this->getQueryString();
 	}
 }
 
