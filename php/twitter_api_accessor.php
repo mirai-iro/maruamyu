@@ -79,11 +79,11 @@ class Maruamyu_Twitter_ApiAccessor extends Maruamyu_Core_OAuthAccessor
 		$oAuthResponseDto = $this->connectRaw($method, $apiPath, $param, $multipartDtoList);
 		if(!$oAuthResponseDto || $oAuthResponseDto->status != 200){return FALSE;}
 		
-		if(isset($oAuthResponseDto->header['X-Rate-Limit-Limit'])){
+		if(isset($oAuthResponseDto->header['x-rate-limit-limit'])){
 			$this->rateLimit[$apiPath] = array(
-				'limit' => $oAuthResponseDto->header['X-Rate-Limit-Limit'],
-				'remaining' => $oAuthResponseDto->header['X-Rate-Limit-Remaining'],
-				'reset' => $oAuthResponseDto->header['X-Rate-Limit-Reset']
+				'limit' => $oAuthResponseDto->header['x-rate-limit-limit'],
+				'remaining' => $oAuthResponseDto->header['x-rate-limit-remaining'],
+				'reset' => $oAuthResponseDto->header['x-rate-limit-reset']
 			);
 		}
 		

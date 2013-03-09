@@ -236,7 +236,8 @@ class Maruamyu_Core_HttpAccessor
 		while(strlen($line) > 0){
 			$line = rtrim( @fgets($sock) );
 			if(preg_match('/^([^:]+): (.+)$/', $line, $match)){
-				$this->responseHeader[$match[1]] = $match[2];
+				$key = strtolower($match[1]);
+				$this->responseHeader[$key] = $match[2];
 			}
 		}
 		
@@ -250,8 +251,8 @@ class Maruamyu_Core_HttpAccessor
 		
 		#----------------------------------------
 		
-		$transferEncoding = strtolower($this->responseHeader['Transfer-Encoding']);
-		$contentEncoding = strtolower($this->responseHeader['Content-Encoding']);
+		$transferEncoding = strtolower($this->responseHeader['transfer-encoding']);
+		$contentEncoding = strtolower($this->responseHeader['content-encoding']);
 		
 		if($transferEncoding == 'chunked'){
 			$unchunk = '';
@@ -290,6 +291,7 @@ class Maruamyu_Core_HttpAccessor
 	
 	public function getResponseHeader($key)
 	{
+		$key = strtolower($key);
 		return $this->responseHeader[$key];
 	}
 	
