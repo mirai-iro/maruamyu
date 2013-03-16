@@ -608,15 +608,16 @@ class Maruamyu_Twitter_ApiAccessor extends Maruamyu_Core_OAuthAccessor
 	}
 	
 	/**
-	 * インスタンスが持っているAccessToken, AccessTokenSecretをもとに署名を作成し、HTTPヘッダ Authorization で使用できる形式で返す
-	 * 
-	 * OAuth Echoで使用する
+	 * インスタンスが持っているAccessToken, AccessTokenSecretをもとに署名を作成し、
+	 * HTTPヘッダ Authorization で使用できる形式で返す。
+	 * OAuth Echoで使用することを想定。
 	 * 
 	 * @link https://dev.twitter.com/docs/auth/oauth/oauth-echo OAuth Echo
 	 * @link https://dev.twitter.com/docs/api/1.1/get/account/verify_credentials GET account/verify_credentials
 	 * 
 	 * @param string $method メソッド。GET または POST
 	 * @param string $apiPath APIのパス (例: 'account/verify_credentials')
+	 * @param array|Maruamyu_Core_QueryStringDto $param APIにパラメータとして渡す値(連想配列)
 	 * @return string HTTPヘッダ Authorization に設定するヘッダ文字列
 	 */
 	public function makeAuthorizationHeader($method, $apiPath, $param = array() )
