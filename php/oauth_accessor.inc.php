@@ -1,33 +1,46 @@
 <?php
 
-/*
-	oauth_accessor.inc.php - OAuth1.0aアクセサ
-		written by にゃー (mirai_iro)
-		managed by まるあみゅ.ねっと (http://maruamyu.net/)
-	
-	以下のライブラリが必要です
-		http_accessor.inc.php - HTTPアクセサ
-		query_string_dto.inc.php - QUERY_STRING操作
-*/
+/**
+ * oauth_accessor.inc.php - OAuth1.0aアクセサ
+ * 
+ * @author written by にゃー (mirai_iro)
+ * @author managed by まるあみゅ.ねっと (http://maruamyu.net/)
+ * 
+ * 以下のファイルが必要です
+ *  http_accessor.inc.php - HTTPアクセサ
+ *  query_string_dto.inc.php - QUERY_STRING操作
+ */
 
-# 通信結果が格納されるDTO
+/** OAuth1.0aアクセサの通信結果が格納されるDTO */
 class Maruamyu_Core_OAuthResponseDto
 {
+	/** HTTPステータスコード */
 	public $status = NULL;
+	
+	/** HTTPレスポンスヘッダ */
 	public $header = array();
+	
+	/** レスポンス内容 */
 	public $body = '';
 }
 
-# マルチパートデータでリクエストする際に設定データを格納するDTO
+/** マルチパートデータでリクエストする際に設定データを格納するDTO */
 class Maruamyu_Core_OAuthRequestMultipartDto
 {
+	/** フィールド名 */
 	public $name = '';
+	
+	/** ファイル名 */
 	public $fileName = '';
+	
+	/** MIMEタイプ */
 	public $mimeType = 'application/octet-stream';
+	
+	/** ファイル内容 */
 	public $body = '';
 }
 
-# OAuth1.0aアクセサ本体
+/** OAuth1.0aアクセサ本体 */
 class Maruamyu_Core_OAuthAccessor
 {
 	private $consumerKey;
@@ -35,11 +48,23 @@ class Maruamyu_Core_OAuthAccessor
 	private $accessToken;
 	private $accessTokenSecret;
 	
+	/**
+	 * コンストラクタ
+	 * 
+	 * @param string $consumerKey コンシューマーキー
+	 * @param string $consumerSecret コンシューマーシークレット
+	 */
 	public function __construct($consumerKey, $consumerSecret)
 	{
 		self::initialize($consumerKey, $consumerSecret);
 	}
 	
+	/**
+	 * インスタンスを初期化する
+	 * 
+	 * @param string $consumerKey コンシューマーキー
+	 * @param string $consumerSecret コンシューマーシークレット
+	 */
 	public function initialize($consumerKey, $consumerSecret)
 	{
 		$this->consumerKey = $consumerKey;
@@ -48,13 +73,27 @@ class Maruamyu_Core_OAuthAccessor
 		$this->accessTokenSecret = '';
 	}
 	
+	/**
+	 * アクセストークンを設定する
+	 * 
+	 * @param string $accessToken アクセストークン
+	 * @param string $accessTokenSecret アクセストークンシークレット
+	 */
 	public function setAccessToken($accessToken, $accessTokenSecret)
 	{
 		$this->accessToken = $accessToken;
 		$this->accessTokenSecret = $accessTokenSecret;
 	}
 	
-	# $param は string, array, Maruamyu_Core_QueryStringDto どれでもOK
+	/**
+	 * インスタンスが持っているAccessToken, AccessTokenSecretをもとに署名を作成し、
+	 * HTTPヘッダ Authorization で使用できる形式で返す。
+	 * 
+	 * @param string $method メソッド
+	 * @param string $url URL
+	 * @param array|Maruamyu_Core_QueryStringDto $param パラメータ(連想配列)
+	 * @return string HTTPヘッダ Authorization に設定するヘッダ文字列
+	 */
 	public function makeAuthorizationHeader($method, $url, $param = NULL)
 	{
 		if(!preg_match('/^(https?):\/\/([^\/]+)(\/.*)?/u', $url, $match)){return FALSE;}
@@ -107,8 +146,15 @@ class Maruamyu_Core_OAuthAccessor
 		return $headerString;
 	}
 	
-	# $param は string, array, Maruamyu_Core_QueryStringDto どれでもOK
-	# $multipartDtoList は array( Maruamyu_Core_OAuthRequestMultipartDto, ...) のみ
+	/**
+	 * 任意のURLにOAuth1.0aでアクセスし値を取得する
+	 * 
+	 * @param string $method メソッド
+	 * @param string $url URL
+	 * @param array|Maruamyu_Core_QueryStringDto $param パラメータ(連想配列)
+	 * @param Maruamyu_Core_OAuthRequestMultipartDto[] multipart/form-dataのデータを送信する場合、Maruamyu_Core_OAuthRequestMultipartDto のインスタンスのリスト
+	 * @return Maruamyu_Core_OAuthResponseDto 通信結果
+	 */
 	public function connect($method, $url, $param = NULL, $requestMultipartDtoList = array() )
 	{
 		$requestQueryStringDto = NULL;
