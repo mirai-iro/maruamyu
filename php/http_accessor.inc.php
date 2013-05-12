@@ -63,22 +63,19 @@ class Maruamyu_Core_HttpAccessor
 	
 	public function setRequestUrl($requestUrl)
 	{
-		if(preg_match('#^(https?)://([^:/]+)(:(\d+))?(.*)#u', $requestUrl, $match)){
-			list($unused, $scheme, $host, $unused, $port, $path) = $match;
-			
-			$port = intval($port,10);
-			if($port < 1){$port = ($scheme == 'https') ? 443 : 80;}
-			
-			$isValidHostAndPort = $this->setRequestHostAndPort($host,$port);
-			if(!$isValidHostAndPort){return FALSE;}
-			
-			$this->setRequestPath($path);
-			
-			return TRUE;
-			
-		} else {
-			return FALSE;
-		}
+		$parsedUrl = parse_url($requestUrl);
+		if(!$parsedUrl){return FALSE;}
+		
+		$port = $parsedUrl['port'];
+		if(!$port){$port = ($parsedUrl['scheme'] == 'https') ? 443 : 80;}
+		
+		$isValidHostAndPort = $this->setRequestHostAndPort($parsedUrl['host'],$port);
+		if(!$isValidHostAndPort){return FALSE;}
+		
+		$this->setRequestPath($parsedUrl['path']);
+		$this->setQueryString($parsedUrl['query']);
+		
+		return TRUE;
 	}
 	
 	public function setRequestHeader($key, $value)
