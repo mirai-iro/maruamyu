@@ -15,6 +15,8 @@
     * はちま起稿 (blog.esuteru.com)
     * 俺的ゲーム速報@Jin (jin115.com)
     * NAVERまとめ (matome.naver.jp)
+    * 痛いニュース(ﾉ∀`) (blog.livedoor.jp/dqnplus/)
+    * オタク.com(オタコム) (0taku.livedoor.biz)
 * 剽窃(著作権侵害)行為・スパム行為を行っている者 (例: ワロスwwwBOT(@wwwww_BOT), @1000favs) およびその関係者による利用はいかなる場合でも認めません。
 
 ## 免責事項
