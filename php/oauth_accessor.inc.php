@@ -197,6 +197,53 @@ class Maruamyu_Core_OAuthAccessor
 		
 		return $responseDto;
 	}
+	
+	/**
+	 * 任意のURLにOAuth1.0aでアクセスしsocketを返す(StreamingAPI用)
+	 * 
+	 * 注意: このメソッドは十分にテストされていません
+	 * 
+	 * @param string $method メソッド
+	 * @param string $url URL
+	 * @param array|Maruamyu_Core_QueryStringDto $param パラメータ(連想配列)
+	 * @param Maruamyu_Core_OAuthRequestMultipartDto[] multipart/form-dataのデータを送信する場合、Maruamyu_Core_OAuthRequestMultipartDto のインスタンスのリスト
+	 * @return resource stream_socket_clientの返り値
+	 */
+	public function connectStreaming($method, $url, $param = NULL, $requestMultipartDtoList = array() )
+	{
+		$requestQueryStringDto = NULL;
+		$signatureQueryStringDto = NULL;
+		
+		if(is_object($param) && strcmp(get_class($param),'Maruamyu_Core_QueryStringDto') == 0){
+			$requestQueryStringDto = clone $param;
+		} else {
+			$requestQueryStringDto = new Maruamyu_Core_QueryStringDto($param);
+		}
+		
+		$signatureQueryStringDto = clone $requestQueryStringDto;
+		
+		if(count($requestMultipartDtoList) > 0){
+			$signatureQueryStringDto = new Maruamyu_Core_QueryStringDto();
+		}
+		
+		$authorizationHeader = self::makeAuthorizationHeader($method, $url, $signatureQueryStringDto);
+		
+		$httpAccessor = new Maruamyu_Core_HttpAccessor($url);
+		$httpAccessor->setRequestMethod($method);
+		$httpAccessor->setRequestHeader('Authorization', $authorizationHeader);
+		
+		if($method == 'GET'){
+			$httpAccessor->setQueryString($requestQueryStringDto->getOAuthQueryString());
+		} else {
+			$httpAccessor->setPostData($requestQueryStringDto->getOAuthQueryString());
+		}
+		
+		foreach( $requestMultipartDtoList as $requestMultipartDto ){
+			$httpAccessor->setMultipartData($requestMultipartDto->name, $requestMultipartDto->fileName, $requestMultipartDto->mimeType, $requestMultipartDto->body);
+		}
+		
+		return $httpAccessor->connectStreaming();
+	}
 }
 
 return TRUE;
