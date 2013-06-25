@@ -142,8 +142,77 @@ class Maruamyu_Core_HttpAccessor
 		$sock = @fsockopen($fsockopenHost, $this->requestPort, $errno, $errstr, $timeoutSec);
 		if(!$sock){return FALSE;}
 		
+		$this->prepareHttpRequestHeaderAndPostDataForConnect();
+		
 		#----------------------------------------
 		
+		$requestBuffer  = $this->requestMethod.' '.$this->requestPath.' HTTP/1.1'.self::CRLF;
+		$requestBuffer .= 'Host: '.$this->requestHost.''.self::CRLF;
+		foreach($this->requestHeader as $key => $value){
+			if(strlen($value) > 0){
+				$requestBuffer .= $key.': '.$value.''.self::CRLF;
+			}
+		}
+		$requestBuffer .= 'Connection: close'.self::CRLF;
+		$requestBuffer .= self::CRLF;
+		$requestBuffer .= $this->postData;
+		
+		@fwrite($sock, $requestBuffer);
+		
+		#----------------------------------------
+		
+		$this->readHttpResponseStatusAndHeader($sock);
+		$this->responseBody = '';
+
+		$responseBuffer = '';
+		
+		while(!@feof($sock)){
+			$responseBuffer .= @fread($sock, self::READ_CHUNK_SIZE);
+		}
+		
+		@fclose($sock);
+		
+		#----------------------------------------
+		
+		$transferEncoding = strtolower($this->responseHeader['transfer-encoding']);
+		$contentEncoding = strtolower($this->responseHeader['content-encoding']);
+		
+		if($transferEncoding == 'chunked'){
+			$unchunk = '';
+			
+			$cursor = 0;
+			$length = strlen($responseBuffer);
+			
+			while($cursor < $length){
+				$chunkSizeEndPos = strpos($responseBuffer, self::CRLF, $cursor);
+				if($chunkSizeEndPos === FALSE){break;}
+				
+				$chunkSize = hexdec( substr($responseBuffer, $cursor, ($chunkSizeEndPos - $cursor)) );
+				
+				$cursor = $chunkSizeEndPos + 2;	# strlen("\r\n") = 2
+				
+				$unchunk .= substr($responseBuffer, $cursor, $chunkSize);
+				
+				$cursor += $chunkSize + 2;	# strlen("\r\n") = 2
+			}
+			
+			$responseBuffer = $unchunk;
+		}
+		
+		$this->responseBody = self::uncompress($contentEncoding, $responseBuffer);
+		
+		#----------------------------------------
+		
+		# HTTPステータスが 200番台, 300番台だったらTRUE、それ以外はFALSE
+		return (200 <= $this->responseStatus && $this->responseStatus < 400) ? TRUE : FALSE;
+	}
+	
+	/**
+	 * このメソッドが呼び出される以前に設定されたPOSTデータ, multipart/form-dataをもとに
+	 * HTTPリクエストヘッダを調整する
+	 */
+	private function prepareHttpRequestHeaderAndPostDataForConnect()
+	{
 		if(strlen($this->postData) > 0){
 			# Content-Typeの判別(指定がない場合のみ)
 			if(!$this->requestHeader['Content-Type']){
@@ -205,80 +274,33 @@ class Maruamyu_Core_HttpAccessor
 		if(count($acceptEncodingList) > 0){
 			$this->requestHeader['Accept-Encoding'] = join(', ', $acceptEncodingList);
 		}
-		
-		#----------------------------------------
-		
-		$requestBuffer  = $this->requestMethod.' '.$this->requestPath.' HTTP/1.1'.self::CRLF;
-		$requestBuffer .= 'Host: '.$this->requestHost.''.self::CRLF;
-		foreach($this->requestHeader as $key => $value){
-			if(strlen($value) > 0){
-				$requestBuffer .= $key.': '.$value.''.self::CRLF;
-			}
+	}
+	
+	/**
+	 * 引数として渡されたストリームからHTTPレスポンス(ステータスとヘッダ)を読み取る
+	 * 
+	 * @param resource $sock fsockopenなどで開いたストリーム
+	 * @return bool HTTPレスポンスステータスが読み取れた場合true
+	 */
+	private function readHttpResponseStatusAndHeader($sock)
+	{
+		$line = rtrim(fgets($sock));
+		if (!preg_match('/^HTTP\/1\.\d (\d+)/', $line, $match)) {
+			return false;
 		}
-		$requestBuffer .= 'Connection: close'.self::CRLF;
-		$requestBuffer .= self::CRLF;
-		$requestBuffer .= $this->postData;
-		
-		@fwrite($sock, $requestBuffer);
-		
-		#----------------------------------------
-		
-		$line = rtrim( @fgets($sock) );
-		if(!preg_match('/^HTTP\/1\.\d (\d+)/', $line, $match)){return FALSE;}
 		
 		$this->responseStatus = intval($match[1]);
 		$this->responseHeader = array();
-		$this->responseBody = '';
 		
-		while(strlen($line) > 0){
-			$line = rtrim( @fgets($sock) );
-			if(preg_match('/^([^:]+): (.+)$/', $line, $match)){
+		while (strlen($line) > 0) {
+			$line = rtrim(fgets($sock));
+			if (preg_match('/^([^:]+): (.+)$/', $line, $match)) {
 				$key = strtolower($match[1]);
 				$this->responseHeader[$key] = $match[2];
 			}
 		}
 		
-		$responseBuffer = '';
-		
-		while(!@feof($sock)){
-			$responseBuffer .= @fread($sock, self::READ_CHUNK_SIZE);
-		}
-		
-		@fclose($sock);
-		
-		#----------------------------------------
-		
-		$transferEncoding = strtolower($this->responseHeader['transfer-encoding']);
-		$contentEncoding = strtolower($this->responseHeader['content-encoding']);
-		
-		if($transferEncoding == 'chunked'){
-			$unchunk = '';
-			
-			$cursor = 0;
-			$length = strlen($responseBuffer);
-			
-			while($cursor < $length){
-				$chunkSizeEndPos = strpos($responseBuffer, self::CRLF, $cursor);
-				if($chunkSizeEndPos === FALSE){break;}
-				
-				$chunkSize = hexdec( substr($responseBuffer, $cursor, ($chunkSizeEndPos - $cursor)) );
-				
-				$cursor = $chunkSizeEndPos + 2;	# strlen("\r\n") = 2
-				
-				$unchunk .= substr($responseBuffer, $cursor, $chunkSize);
-				
-				$cursor += $chunkSize + 2;	# strlen("\r\n") = 2
-			}
-			
-			$responseBuffer = $unchunk;
-		}
-		
-		$this->responseBody = self::uncompress($contentEncoding, $responseBuffer);
-		
-		#----------------------------------------
-		
-		# HTTPステータスが 200番台, 300番台だったらTRUE、それ以外はFALSE
-		return (200 <= $this->responseStatus && $this->responseStatus < 400) ? TRUE : FALSE;
+		return true;
 	}
 	
 	public function getResponseStatus()
