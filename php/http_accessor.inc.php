@@ -303,6 +303,46 @@ class Maruamyu_Core_HttpAccessor
 		return true;
 	}
 	
+	/**
+	 * TCP接続してsocketを返す(StreamingAPI用)
+	 * 
+	 * 注意: このメソッドは十分にテストされていません
+	 * 
+	 * @param float $timeoutSec stream_socket_clientに引数として渡すタイムアウト秒数
+	 * @return resource stream_socket_clientの返り値
+	 */
+	public function connectStreaming($timeoutSec = 0)
+	{
+		if ($timeoutSec < 1) {$timeoutSec = self::DEFAULT_TIMEOUT_SEC;}
+		
+		$transport = 'tcp';
+		if ($this->requestPort == 443) {$transport = 'tls';}
+		
+		$streamURI = sprintf("%s://%s:%d", $transport, $this->requestHost, $this->requestPort);
+		
+		$socket = stream_socket_client($streamURI, $errno, $errstr, $timeoutSec);
+		if (!$socket) {return false;}
+		
+		$this->prepareHttpRequestHeaderAndPostDataForConnect();
+		
+		$requestBuffer  = $this->requestMethod.' '.$this->requestPath.' HTTP/1.1'.self::CRLF;
+		$requestBuffer .= 'Host: '.$this->requestHost.''.self::CRLF;
+		foreach ($this->requestHeader as $key => $value) {
+			if(strlen($value) > 0){
+				$requestBuffer .= $key.': '.$value.''.self::CRLF;
+			}
+		}
+		$requestBuffer .= 'Connection: close'.self::CRLF;
+		$requestBuffer .= self::CRLF;
+		$requestBuffer .= $this->postData;
+		
+		fwrite($socket, $requestBuffer);
+		
+		$this->readHttpResponseStatusAndHeader($socket);
+		
+		return $socket;
+	}
+	
 	public function getResponseStatus()
 	{
 		return $this->responseStatus;
